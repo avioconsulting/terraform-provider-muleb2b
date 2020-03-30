@@ -1,0 +1,5 @@
+.terraform/
+terraform-provider-muleb2b*
+terraform.tfstate
+terraform.tfstate.backup
+.idea/
