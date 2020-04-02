@@ -17,12 +17,12 @@ provider "muleb2b" {
 The Mule B2B provider only offers username/password authentication.
 
 ### Static Credentials
-!> !> Warning: Hard-coding credentials into any Terraform configuration is not recommended, and risks secret leakage should this file ever be committed to a public version control system.
+!> Warning: Hard-coding credentials into any Terraform configuration is not recommended, and risks secret leakage should this file ever be committed to a public version control system.
 
 Static credentials can be provided by adding a `username` and `password` in-line in the Mule B2B provider block.
 
 Usage:
-```hcl-terraform
+```hcl
 provider "muleb2b" {
   organization_id = "be4f0fba-541b-5f82-b51d-f047b6569645"
   username = "my-test-user"
@@ -32,7 +32,7 @@ provider "muleb2b" {
 
 ### Environment Variables
 You can provide your credentials with the `MULEB2B_USERNAME` and `MULEB2B_PASSWORD` environment variables. You may also use the `MULEB2B_ORG` environment variable rather than the  `organization_id` variable.
-```hcl-terraform
+```hcl
 provider "muleb2b" {}
 ``` 
 
