@@ -39,7 +39,7 @@ echo "Downloading https://github.com/avioconsulting/terraform-provider-muleb2b/r
 curl -LO "https://github.com/avioconsulting/terraform-provider-muleb2b/releases/download/${VERSION}/terraform-provider-muleb2b_${OS}_${ARCH}.tar.gz"
 tar -xzf "terraform-provider-muleb2b_${OS}_${ARCH}.tar.gz"
 
-if [[ OS != "windows" ]]; then
+if [[ $OS != "windows" ]]; then
   if [[ ! -d ~/.terraform.d/plugins ]]; then
     mkdir -p ~/.terraform.d/plugins
   fi
