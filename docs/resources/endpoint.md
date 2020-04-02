@@ -73,7 +73,7 @@ The `sftp_config` block allows one to configure the endpoint's SFTP settings
 * `server_address` - (Required) Address of the SFTP server
 * `server_port` - (Required) Port of the SFTP server
 * `path` - (Required) Path for files on the SFTP server
-* `moved_path` - (Optional) Path files will be archived to after being processed
+* `archive_path` - (Optional) Path files will be archived to after being processed
 * `size_check_wait_time` - (Optional) The wait time in milliseconds between size checks to determine if a file is ready to be processed. Defaults to `1000`
 * `polling_frequency` - (Optional) Frequency in milliseconds to check the source path for new files. Defaults to `1000`
 * `auth_mode` - (Required) Auth mode for the SFTP service

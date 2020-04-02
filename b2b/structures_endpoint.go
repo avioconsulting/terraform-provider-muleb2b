@@ -7,6 +7,12 @@ import (
 	"strings"
 )
 
+type sensitiveData struct {
+	password *string
+	clientSecret *string
+	apiKey *string
+}
+
 func readSftpConfig(data interface{}) (*muleb2b.EndpointConfig, error) {
 	config := data.(*schema.Set).List()
 	for _, raw := range config {
@@ -17,10 +23,14 @@ func readSftpConfig(data interface{}) (*muleb2b.EndpointConfig, error) {
 
 		address := cfg["server_address"].(string)
 		port := cfg["server_port"].(int)
-		movedPath := cfg["moved_path"].(string)
 		scwt := cfg["size_check_wait_time"].(int)
 		pollingFreq := cfg["polling_frequency"].(int)
 		path := cfg["path"].(string)
+
+		var archivePath *string = nil
+		if v, ok := cfg["archive_path"]; ok {
+			archivePath = muleb2b.String(v.(string))
+		}
 
 		configName, ok := cfg["config_name"].(string)
 		if !ok || configName == "" {
@@ -33,7 +43,7 @@ func readSftpConfig(data interface{}) (*muleb2b.EndpointConfig, error) {
 
 			if err == nil {
 				endpointConfig := muleb2b.EndpointConfig{
-					MovedPath:         muleb2b.String(movedPath),
+					MovedPath:         archivePath,
 					SizeCheckWaitTime: muleb2b.Integer(scwt),
 					PollingFrequency:  muleb2b.Integer(pollingFreq),
 					Path:              muleb2b.String(path),
@@ -225,7 +235,7 @@ func readTlsContextConfig(data interface{}) (*muleb2b.TlsContext, error) {
 	return nil, nil
 }
 
-func flattenHttpConfig(endpointConfig *muleb2b.EndpointConfig) []interface{} {
+func flattenHttpConfig(endpointConfig *muleb2b.EndpointConfig, sensitive *sensitiveData) []interface{} {
 	m := make(map[string]interface{})
 
 	if endpointConfig != nil {
@@ -236,7 +246,7 @@ func flattenHttpConfig(endpointConfig *muleb2b.EndpointConfig) []interface{} {
 		m["protocol"] = strings.ToLower(*endpointConfig.Protocol)
 		m["response_timeout"] = *endpointConfig.ResponseTimeout
 		m["connection_idle_timeout"] = *endpointConfig.ConnectionIdleTimeout
-		m["auth_mode"] = flattenAuthMode(endpointConfig.AuthMode)
+		m["auth_mode"] = flattenAuthMode(endpointConfig.AuthMode, sensitive)
 		if strings.ToLower(*endpointConfig.Protocol) == "https" {
 			m["tls_context"] = flattenTlsContext(endpointConfig.TlsContext)
 		}
@@ -245,7 +255,7 @@ func flattenHttpConfig(endpointConfig *muleb2b.EndpointConfig) []interface{} {
 	return []interface{}{m}
 }
 
-func flattenSftpConfig(endpointConfig *muleb2b.EndpointConfig) []interface{} {
+func flattenSftpConfig(endpointConfig *muleb2b.EndpointConfig, sensitive *sensitiveData) []interface{}{
 	m := make(map[string]interface{})
 
 	if endpointConfig != nil {
@@ -253,16 +263,18 @@ func flattenSftpConfig(endpointConfig *muleb2b.EndpointConfig) []interface{} {
 		m["server_address"] = *endpointConfig.ServerAddress
 		m["server_port"] = *endpointConfig.ServerPort
 		m["path"] = *endpointConfig.Path
-		m["moved_path"] = *endpointConfig.MovedPath
+		if endpointConfig.MovedPath != nil {
+			m["archive_path"] = *endpointConfig.MovedPath
+		}
 		m["size_check_wait_time"] = *endpointConfig.SizeCheckWaitTime
 		m["polling_frequency"] = *endpointConfig.PollingFrequency
-		m["auth_mode"] = flattenAuthMode(endpointConfig.AuthMode)
+		m["auth_mode"] = flattenAuthMode(endpointConfig.AuthMode, sensitive)
 	}
 
 	return []interface{}{m}
 }
 
-func flattenAuthMode(authMode *muleb2b.AuthMode) []interface{} {
+func flattenAuthMode(authMode *muleb2b.AuthMode, sensitive *sensitiveData) []interface{} {
 	m := make(map[string]interface{})
 
 	if authMode != nil {
@@ -270,19 +282,27 @@ func flattenAuthMode(authMode *muleb2b.AuthMode) []interface{} {
 		switch *authMode.AuthType {
 		case "BASIC":
 			m["username"] = *authMode.Username
-			m["password"] = *authMode.Password
+			if sensitive != nil && sensitive.password != nil {
+				m["password"] = *sensitive.password
+			}
 		case "API_KEY":
-			m["api_key"] = *authMode.ApiKey
+			if sensitive != nil && sensitive.apiKey != nil {
+				m["api_key"] = *sensitive.apiKey
+			}
 			m["http_header_name"] = *authMode.HttpHeaderName
 		case "CLIENT_CREDENTIALS":
 			m["client_id"] = *authMode.ClientId
-			m["client_secret"] = *authMode.ClientSecret
+			if sensitive != nil && sensitive.clientSecret != nil {
+				m["client_secret"] = *sensitive.clientSecret
+			}
 			m["client_id_header"] = *authMode.ClientIdHeader
 			m["client_secret_header"] = *authMode.ClientSecretHeader
 		case "OAUTH_TOKEN":
 			m["token_url"] = *authMode.TokenUrl
 			m["client_id"] = *authMode.ClientId
-			m["client_secret"] = *authMode.ClientSecret
+			if sensitive != nil && sensitive.clientSecret != nil {
+				m["client_secret"] = *sensitive.clientSecret
+			}
 		}
 	}
 
@@ -335,9 +355,12 @@ func expandSftpConfig(d interface{}) *muleb2b.EndpointConfig {
 				ServerAddress:     muleb2b.String(configData["server_address"].(string)),
 				ServerPort:        muleb2b.Integer(configData["server_port"].(int)),
 				Path:              muleb2b.String(configData["path"].(string)),
-				MovedPath:         muleb2b.String(configData["moved_path"].(string)),
 				SizeCheckWaitTime: muleb2b.Integer(configData["size_check_wait_time"].(int)),
 				PollingFrequency:  muleb2b.Integer(configData["polling_frequency"].(int)),
+			}
+
+			if v, ok := configData["archive_path"]; ok {
+				endpointConfig.MovedPath = muleb2b.String(v.(string))
 			}
 
 			endpointConfig.AuthMode = expandAuthMode(configData["auth_mode"])

@@ -213,6 +213,164 @@ func testResourceEndpoint_UpdateCheckHttp() resource.TestCheckFunc {
 	}
 }
 
+func TestAccMuleB2bEndpoint_sftp(t *testing.T) {
+	name := "accTest-" + acctest.RandString(5)
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckExampleResourceDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testResourceEndpoint_InitialConfigSftp(name),
+				Check:  testResourceEndpoint_InitialCheckSftp(),
+			},
+			{
+				Config: testResourceEndpoint_UpdateConfigSftp(name),
+				Check:  testResourceEndpoint_UpdateCheckSftp(),
+			},
+		},
+	})
+}
+
+func testResourceEndpoint_InitialConfigSftp(name string) string {
+	return fmt.Sprintf(`data "muleb2b_environment" "sbx" {
+  name = "Sandbox"
+}
+
+data "muleb2b_identifier_type" "as2" {
+  environment_id = data.muleb2b_environment.sbx.id
+  name = "AS2"
+}
+
+resource "muleb2b_partner" "test" {
+  name           = "%s"
+  environment_id = data.muleb2b_environment.sbx.id
+  identifier {
+    identifier_type_id = data.muleb2b_identifier_type.as2.id
+    value = "%s-id1"
+  }
+}
+
+resource "muleb2b_endpoint" "test" {
+  name = "%s"
+  role = "send"
+  type = "sftp"
+  partner_id = muleb2b_partner.test.id
+  environment_id = data.muleb2b_environment.sbx.id
+  sftp_config {
+    server_address = "test.mytest.com"
+    server_port = 80
+    path = "banana"
+    auth_mode  {
+      type = "basic"
+      username = "monkey"
+      password = "business"
+    }
+  }
+}`, name, name, name)
+}
+
+func testResourceEndpoint_InitialCheckSftp() resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		fmt.Sprintf("Checking Initial\n")
+		resourceState := s.Modules[0].Resources["muleb2b_endpoint.test"]
+		if resourceState == nil {
+			return fmt.Errorf("resource not found in state")
+		}
+
+		instanceState := resourceState.Primary
+		if instanceState == nil {
+			return fmt.Errorf("resource has no primary instance")
+		}
+
+		id := instanceState.ID
+
+		if id == "" {
+			return fmt.Errorf("id is not set")
+		}
+
+		client := testAccProvider.Meta().(*muleb2b.Client)
+		_, err := client.GetEndpoint(id)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+}
+
+func testResourceEndpoint_UpdateConfigSftp(name string) string {
+	return fmt.Sprintf(`data "muleb2b_environment" "sbx" {
+  name = "Sandbox"
+}
+
+data "muleb2b_identifier_type" "as2" {
+  environment_id = data.muleb2b_environment.sbx.id
+  name = "AS2"
+}
+
+resource "muleb2b_partner" "test" {
+  name           = "%s"
+  environment_id = data.muleb2b_environment.sbx.id
+  identifier {
+    identifier_type_id = data.muleb2b_identifier_type.as2.id
+    value = "%s-id1"
+  }
+}
+
+resource "muleb2b_endpoint" "test" {
+  name = "%s"
+  role = "send"
+  type = "sftp"
+  partner_id = muleb2b_partner.test.id
+  environment_id = data.muleb2b_environment.sbx.id
+  sftp_config {
+    server_address = "test.mytest.com"
+    server_port = 22
+    path = "banana"
+    auth_mode  {
+      type = "basic"
+      username = "monkey"
+      password = "business"
+    }
+  }
+}`, name, name, name)
+}
+
+func testResourceEndpoint_UpdateCheckSftp() resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		fmt.Sprintf("Checking Update\n")
+		resourceState := s.Modules[0].Resources["muleb2b_endpoint.test"]
+		if resourceState == nil {
+			return fmt.Errorf("resource not found in state")
+		}
+
+		instanceState := resourceState.Primary
+		if instanceState == nil {
+			return fmt.Errorf("resource has no primary instance")
+		}
+
+		id := instanceState.ID
+
+		if id == "" {
+			return fmt.Errorf("id is not set")
+		}
+
+		client := testAccProvider.Meta().(*muleb2b.Client)
+		endpoint, err := client.GetEndpoint(id)
+		if err != nil {
+			return err
+		}
+
+		if endpoint.Config == nil || endpoint.Config.ServerPort == nil || *endpoint.Config.ServerPort != 22 {
+			return fmt.Errorf("server port did not update")
+		}
+
+		return nil
+	}
+}
+
+
 func testAccCheckExampleResourceDestroy(s *terraform.State) error {
 	cli := testAccProvider.Meta().(*muleb2b.Client)
 

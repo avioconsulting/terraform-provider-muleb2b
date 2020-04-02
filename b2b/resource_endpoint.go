@@ -146,19 +146,21 @@ func resourceEndpoint() *schema.Resource {
 							Required:    true,
 							Description: "Port of the sftp server",
 						},
-						"moved_path": {
+						"archive_path": {
 							Type:        schema.TypeString,
-							Required:    true,
+							Optional:    true,
 							Description: "Path to move read files into",
 						},
 						"size_check_wait_time": {
 							Type:        schema.TypeInt,
-							Required:    true,
+							Optional:    true,
+							Default:     1000,
 							Description: "Time to wait to check the file size",
 						},
 						"polling_frequency": {
 							Type:        schema.TypeInt,
-							Required:    true,
+							Optional:    true,
+							Default:     1000,
 							Description: "Time to wait between checking for new files",
 						},
 						"path": {
@@ -194,6 +196,7 @@ func endpointAuthModeSchema() *schema.Schema {
 				"password": {
 					Type:        schema.TypeString,
 					Optional:    true,
+					Sensitive:   true,
 					Description: "The password to use for authentication",
 				},
 				"http_header_name": {
@@ -204,6 +207,7 @@ func endpointAuthModeSchema() *schema.Schema {
 				"api_key": {
 					Type:        schema.TypeString,
 					Optional:    true,
+					Sensitive:   true,
 					Description: "API key to use for authentication",
 				},
 				"client_id": {
@@ -214,6 +218,7 @@ func endpointAuthModeSchema() *schema.Schema {
 				"client_secret": {
 					Type:        schema.TypeString,
 					Optional:    true,
+					Sensitive:   true,
 					Description: "Secret to use in authentication",
 				},
 				"client_id_header": {
@@ -316,6 +321,7 @@ func resourceEndpointCreate(d *schema.ResourceData, m interface{}) error {
 		endpoint.PartnerCertificateID = muleb2b.String(v.(string))
 	}
 
+	// Preserve initial settings
 	if endType == "sftp" {
 		cfg, ok := d.GetOk("sftp_config")
 		if ok {
@@ -339,6 +345,18 @@ func resourceEndpointCreate(d *schema.ResourceData, m interface{}) error {
 		} else {
 			return fmt.Errorf("http_config is required when type is set to http")
 		}
+	}
+
+	if *endpoint.EndpointType == "sftp" {
+		if err := d.Set("sftp_config", flattenSftpConfig(endpoint.Config, nil)); err != nil {
+			return err
+		}
+	} else if *endpoint.EndpointType == "http" {
+		if err := d.Set("http_config", flattenHttpConfig(endpoint.Config, nil)); err != nil {
+			return err
+		}
+	} else {
+		return fmt.Errorf("unsupported endpoint type: %s", *endpoint.EndpointType)
 	}
 
 	id, err := client.CreateEndpoint(endpoint)
@@ -377,12 +395,46 @@ func resourceEndpointRead(d *schema.ResourceData, m interface{}) error {
 		d.Set("description", *endpoint.Description)
 	}
 
+	// Retrieve sensitive data from state - this can be improved
+	var sensitive *sensitiveData = nil
 	if *endpoint.EndpointType == "sftp" {
-		if err = d.Set("sftp_config", flattenSftpConfig(endpoint.Config)); err != nil {
+		endpoint.Config = expandSftpConfig(d.Get("sftp_config"))
+		if endpoint.Config.AuthMode.Password != nil {
+			sensitive = &sensitiveData{
+				password: endpoint.Config.AuthMode.Password,
+			}
+		} else if endpoint.Config.AuthMode.ClientSecret != nil {
+			sensitive = &sensitiveData{
+				clientSecret: endpoint.Config.AuthMode.ClientSecret,
+			}
+		} else if endpoint.Config.AuthMode.ApiKey != nil {
+			sensitive = &sensitiveData{
+				apiKey: endpoint.Config.AuthMode.ApiKey,
+			}
+		}
+	} else if *endpoint.EndpointType == "http" {
+		endpoint.Config = expandHttpConfig(d.Get("http_config"))
+		if endpoint.Config.AuthMode.Password != nil {
+			sensitive = &sensitiveData{
+				password: endpoint.Config.AuthMode.Password,
+			}
+		} else if endpoint.Config.AuthMode.ClientSecret != nil {
+			sensitive = &sensitiveData{
+				clientSecret: endpoint.Config.AuthMode.ClientSecret,
+			}
+		} else if endpoint.Config.AuthMode.ApiKey != nil {
+			sensitive = &sensitiveData{
+				apiKey: endpoint.Config.AuthMode.ApiKey,
+			}
+		}
+	}
+
+	if *endpoint.EndpointType == "sftp" {
+		if err = d.Set("sftp_config", flattenSftpConfig(endpoint.Config, sensitive)); err != nil {
 			return err
 		}
 	} else if *endpoint.EndpointType == "http" {
-		if err = d.Set("http_config", flattenHttpConfig(endpoint.Config)); err != nil {
+		if err = d.Set("http_config", flattenHttpConfig(endpoint.Config, sensitive)); err != nil {
 			return err
 		}
 	} else {
