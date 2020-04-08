@@ -48,7 +48,7 @@ $ terraform plan
 
 The following arguments are supported in the Mule B2B provider block.
 
-* `base_url` - (Optional) The base URL for the Mule B2B API. Typically it is `https://anypoint.mulesoft.com/`
+* `base_url` - (Optional) The base URL for the Mule B2B API. Typically it is `https://anypoint.mulesoft.com/`. Defaults to `"https://anypoint.mulesoft.com/"`
 * `organization_id` - (Optional) Either this or the `MULEB2B_ORG` environment variable are required. This is the organization all the resources will be created under. This is the Business Group Id from your organization on Anypoint.
 * `username` - (Optional) Either this or the `MULEB2B_USERNAME` environment variable are required.
 * `password` - (Optional) Either this or the `MULEB2B_PASSWORD` environment variable are required.

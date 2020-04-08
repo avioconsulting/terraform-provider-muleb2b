@@ -6,30 +6,32 @@ import (
 	"github.com/hashicorp/terraform/helper/acctest"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
+	"os"
 	"testing"
 )
 
 func TestAccMuleB2bDocument(t *testing.T) {
 	name := "accTest-" + acctest.RandString(5)
+	envName := os.Getenv("TEST_ENV_NAME")
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testResourceDocument_InitialConfig(name),
+				Config: testResourceDocument_InitialConfig(envName, name),
 				Check:  testResourceDocument_InitialCheck(),
 			},
 			{
-				Config: testResourceDocument_UpdateConfig(name),
+				Config: testResourceDocument_UpdateConfig(envName, name),
 				Check:  testResourceDocument_UpdateCheck(),
 			},
 		},
 	})
 }
 
-func testResourceDocument_InitialConfig(name string) string {
+func testResourceDocument_InitialConfig(envName, name string) string {
 	return fmt.Sprintf(`data "muleb2b_environment" "sbx" {
-  name = "Sandbox"
+  name = "%s"
 }
 
 data "muleb2b_identifier_type" "as2" {
@@ -51,7 +53,7 @@ resource "muleb2b_document" "test" {
   partner_id = muleb2b_partner.test.id
   environment_id = data.muleb2b_environment.sbx.id
   edi_document_type_id = "6117a01c-d661-4517-80a5-5a6fe08d833c"
-}`, name, name, name)
+}`, envName, name, name, name)
 }
 
 func testResourceDocument_InitialCheck() resource.TestCheckFunc {
@@ -87,9 +89,9 @@ func testResourceDocument_InitialCheck() resource.TestCheckFunc {
 	}
 }
 
-func testResourceDocument_UpdateConfig(name string) string {
+func testResourceDocument_UpdateConfig(envName, name string) string {
 	return fmt.Sprintf(`data "muleb2b_environment" "sbx" {
-  name = "Sandbox"
+  name = "%s"
 }
 
 data "muleb2b_identifier_type" "as2" {
@@ -111,7 +113,7 @@ resource "muleb2b_document" "test" {
   partner_id = muleb2b_partner.test.id
   environment_id = data.muleb2b_environment.sbx.id
   edi_document_type_id = "f4190af3-a1ee-4aa7-8a1c-67d385b57c90"
-}`, name, name, name)
+}`, envName, name, name, name)
 }
 
 func testResourceDocument_UpdateCheck() resource.TestCheckFunc {

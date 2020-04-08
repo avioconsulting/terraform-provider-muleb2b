@@ -26,7 +26,27 @@ There are two options for using the provider on your system:
     * Windows: %APPDATA%\terraform.d\plugins
 
 ## Integration Tests
-Execute `make testacc` to run the integration tests. These environment variables must be set first: `MULEB2B_BASE_URL`, `MULEB2B_ORG`, `MULEB2B_USERNAME`, and `MULEB2B_PASSWORD`
+Execute `make testacc` to run the integration tests. These environment variables must be set first: `MULEB2B_BASE_URL`, `MULEB2B_ORG`, `MULEB2B_USERNAME`, and `MULEB2B_PASSWORD`. The environment name is set to `DEV` by default, but it may be set by setting `ENV=<environment name>`. 
+
+Example with custom environment name:
+```shell script
+export MULEB2B_BASE_URL="http://anypoint.mulesoft.com/"
+export MULEB2B_ORG="2bf070b0-b767-4f0c-bb40-79b197b9184a"
+export MULEB2B_USERNAME="test"
+export MULEB2B_PASSWORD="password"
+make testacc ENV=Sandbox
+```
+
+The tests can also be executed in a docker container:
+```shell script
+docker run --rm -v "$PWD":/usr/src/myapp -w /usr/src/myapp -e GOOS=linux -e GOARCH=amd64 \
+    -e MULEB2B_ORG=2bf070b0-b767-4f0c-bb40-79b197b9184a \
+    -e MULEB2B_BASE_URL="https://anypoint.mulesoft.com/" \
+    -e MULEB2B_USERNAME=test \
+    -e MULEB2B_PASSWORD=password \
+    golang:1.13 \
+    make testacc ENV=Sandbox
+```
 
 ## Terraform Cloud
 Using this provider in Terraform Cloud requires that the linux amd64 version of the terraform-provider-muleb2b_vX.Y.Z binary be added to the Terraform project's directory structure in `${TERRAFORM_PROJECT_BASE_DIR}/terraform.d/plugins/linux_amd64`.

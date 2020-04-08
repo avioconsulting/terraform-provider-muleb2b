@@ -5,30 +5,32 @@ import (
 	"github.com/hashicorp/terraform/helper/acctest"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
+	"os"
 	"testing"
 )
 
 func TestAccMuleB2bResourceDocumentFlow(t *testing.T) {
 	name := "accTest-" + acctest.RandString(5)
+	envName := os.Getenv("TEST_ENV_NAME")
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testResourceDocumentFlow_InitialConfig(name),
+				Config: testResourceDocumentFlow_InitialConfig(envName, name),
 				Check:  testResourceDocumentFlow_InitialCheck(),
 			},
 			{
-				Config: testResourceDocumentFlow_UpdateConfig(name),
+				Config: testResourceDocumentFlow_UpdateConfig(envName, name),
 				Check:  testResourceDocumentFlow_UpdateCheck(),
 			},
 		},
 	})
 }
 
-func testResourceDocumentFlow_InitialConfig(name string) string {
+func testResourceDocumentFlow_InitialConfig(envName, name string) string {
 	return fmt.Sprintf(`data "muleb2b_environment" "sbx" {
-  name = "Sandbox"
+  name = "%s"
 }
 
 data "muleb2b_partner" "host" {
@@ -77,7 +79,7 @@ resource "muleb2b_document_flow" "test" {
     receiving_endpoint_id = muleb2b_endpoint.test.id
   }
 }
-`, name, name, name, name)
+`, envName, name, name, name, name)
 }
 
 func testResourceDocumentFlow_InitialCheck() resource.TestCheckFunc {
@@ -92,9 +94,9 @@ func testResourceDocumentFlow_InitialCheck() resource.TestCheckFunc {
 	}
 }
 
-func testResourceDocumentFlow_UpdateConfig(name string) string {
+func testResourceDocumentFlow_UpdateConfig(envName, name string) string {
 	return fmt.Sprintf(`data "muleb2b_environment" "sbx" {
-  name = "Sandbox"
+  name = "%s"
 }
 
 data "muleb2b_partner" "host" {
@@ -173,7 +175,7 @@ resource "muleb2b_document_flow" "test" {
     source_doc_type_id = muleb2b_document.source.id
     target_doc_type_id = muleb2b_document.target.id
   }
-}`, name, name, name, name, name, name)
+}`, envName, name, name, name, name, name, name)
 }
 
 func testResourceDocumentFlow_UpdateCheck() resource.TestCheckFunc {

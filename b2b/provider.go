@@ -13,7 +13,7 @@ func Provider() *schema.Provider {
 			"base_url": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Default:     "https://devx.anypoint.mulesoft.com/",
+				Default:     "https://anypoint.mulesoft.com/",
 				Description: "The base URL for the server running the Mule B2B API",
 			},
 			"organization_id": {
@@ -53,15 +53,15 @@ func Provider() *schema.Provider {
 
 func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 
-	baseUrl, baseOk := d.GetOk("base_url")
+	baseUrl := d.Get("base_url")
 	orgId, orgOk := d.GetOk("organization_id")
 	user, userOk := d.GetOk("username")
 	password, passwordOk := d.GetOk("password")
 
-	if !baseOk {
-		if val := os.Getenv("MULEB2B_BASE_URL"); val != "" {
-			baseUrl = val
-		}
+
+
+	if val := os.Getenv("MULEB2B_BASE_URL"); val != "" {
+		baseUrl = val
 	}
 
 	if !orgOk {

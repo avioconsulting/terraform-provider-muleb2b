@@ -31,7 +31,7 @@ func dataSourceEnvironmentRead(d *schema.ResourceData, meta interface{}) error {
 			return err
 		}
 
-		if env.Id == nil || *env.Id == "" {
+		if env == nil || env.Id == nil || *env.Id == "" {
 			return fmt.Errorf("no environment found with name (%s)", name)
 		}
 

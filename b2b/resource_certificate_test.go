@@ -5,30 +5,32 @@ import (
 	"github.com/hashicorp/terraform/helper/acctest"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
+	"os"
 	"testing"
 )
 
 func TestAccMuleB2bResourceCertificate(t *testing.T) {
 	name := "accTest-" + acctest.RandString(5)
+	envName := os.Getenv("TEST_ENV_NAME")
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testResourceCertificate_InitialConfig(name),
+				Config: testResourceCertificate_InitialConfig(envName, name),
 				Check:  testResourceCertificate_InitialCheck(),
 			},
 			{
-				Config: testResourceCertificate_UpdateConfig(name),
+				Config: testResourceCertificate_UpdateConfig(envName, name),
 				Check:  testResourceCertificate_UpdateCheck(),
 			},
 		},
 	})
 }
 
-func testResourceCertificate_InitialConfig(name string) string {
+func testResourceCertificate_InitialConfig(envName, name string) string {
 	return fmt.Sprintf(`data "muleb2b_environment" "sbx" {
-  name = "Sandbox"
+  name = "%s"
 }
 
 data "muleb2b_partner" "host" {
@@ -127,7 +129,7 @@ axlm6QIk1IMrzP7+XQo=
 -----END CERTIFICATE-----
 EOF
 }
-`, name, name, name, name)
+`, envName, name, name, name, name)
 }
 
 func testResourceCertificate_InitialCheck() resource.TestCheckFunc {
@@ -142,9 +144,9 @@ func testResourceCertificate_InitialCheck() resource.TestCheckFunc {
 	}
 }
 
-func testResourceCertificate_UpdateConfig(name string) string {
+func testResourceCertificate_UpdateConfig(envName, name string) string {
 	return fmt.Sprintf(`data "muleb2b_environment" "sbx" {
-  name = "Sandbox"
+  name = "%s"
 }
 
 data "muleb2b_partner" "host" {
@@ -242,7 +244,7 @@ HTUSfNOJpiUGKNGZ4wVNoa6Qki5fH1pWlGE+HTcizBYW/Sv5mHgNIbjOTiPsVvZd
 axlm6QIk1IMrzP7+XQo=
 -----END CERTIFICATE-----
 EOF
-}`, name, name, name, name)
+}`, envName, name, name, name, name)
 }
 
 func testResourceCertificate_UpdateCheck() resource.TestCheckFunc {

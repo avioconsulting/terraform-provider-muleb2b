@@ -6,32 +6,34 @@ import (
 	"github.com/hashicorp/terraform/helper/acctest"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
+	"os"
 	"strings"
 	"testing"
 )
 
 func TestAccMuleB2bEndpoint_http(t *testing.T) {
 	name := "accTest-" + acctest.RandString(5)
+	envName := os.Getenv("TEST_ENV_NAME")
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckExampleResourceDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testResourceEndpoint_InitialConfigHttp(name),
+				Config: testResourceEndpoint_InitialConfigHttp(envName, name),
 				Check:  testResourceEndpoint_InitialCheckHttp(),
 			},
 			{
-				Config: testResourceEndpoint_UpdateConfigHttp(name),
+				Config: testResourceEndpoint_UpdateConfigHttp(envName, name),
 				Check:  testResourceEndpoint_UpdateCheckHttp(),
 			},
 		},
 	})
 }
 
-func testResourceEndpoint_InitialConfigHttp(name string) string {
+func testResourceEndpoint_InitialConfigHttp(envName, name string) string {
 	return fmt.Sprintf(`data "muleb2b_environment" "sbx" {
-  name = "Sandbox"
+  name = "%s"
 }
 
 data "muleb2b_identifier_type" "as2" {
@@ -63,7 +65,7 @@ resource "muleb2b_endpoint" "test" {
       type = "none"
     }
   }
-}`, name, name, name)
+}`, envName, name, name, name)
 }
 
 func testResourceEndpoint_InitialCheckHttp() resource.TestCheckFunc {
@@ -95,9 +97,9 @@ func testResourceEndpoint_InitialCheckHttp() resource.TestCheckFunc {
 	}
 }
 
-func testResourceEndpoint_UpdateConfigHttp(name string) string {
+func testResourceEndpoint_UpdateConfigHttp(envName, name string) string {
 	return fmt.Sprintf(`data "muleb2b_environment" "sbx" {
-  name = "Sandbox"
+  name = "%s"
 }
 
 data "muleb2b_identifier_type" "as2" {
@@ -173,7 +175,7 @@ resource "muleb2b_endpoint" "test" {
       need_certificate = true
     }
   }
-}`, name, name, name, name)
+}`, envName, name, name, name, name)
 }
 
 func testResourceEndpoint_UpdateCheckHttp() resource.TestCheckFunc {
@@ -215,26 +217,27 @@ func testResourceEndpoint_UpdateCheckHttp() resource.TestCheckFunc {
 
 func TestAccMuleB2bEndpoint_sftp(t *testing.T) {
 	name := "accTest-" + acctest.RandString(5)
+	envName := os.Getenv("TEST_ENV_NAME")
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckExampleResourceDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testResourceEndpoint_InitialConfigSftp(name),
+				Config: testResourceEndpoint_InitialConfigSftp(envName, name),
 				Check:  testResourceEndpoint_InitialCheckSftp(),
 			},
 			{
-				Config: testResourceEndpoint_UpdateConfigSftp(name),
+				Config: testResourceEndpoint_UpdateConfigSftp(envName, name),
 				Check:  testResourceEndpoint_UpdateCheckSftp(),
 			},
 		},
 	})
 }
 
-func testResourceEndpoint_InitialConfigSftp(name string) string {
+func testResourceEndpoint_InitialConfigSftp(envName, name string) string {
 	return fmt.Sprintf(`data "muleb2b_environment" "sbx" {
-  name = "Sandbox"
+  name = "%s"
 }
 
 data "muleb2b_identifier_type" "as2" {
@@ -267,7 +270,7 @@ resource "muleb2b_endpoint" "test" {
       password = "business"
     }
   }
-}`, name, name, name)
+}`, envName, name, name, name)
 }
 
 func testResourceEndpoint_InitialCheckSftp() resource.TestCheckFunc {
@@ -299,9 +302,9 @@ func testResourceEndpoint_InitialCheckSftp() resource.TestCheckFunc {
 	}
 }
 
-func testResourceEndpoint_UpdateConfigSftp(name string) string {
+func testResourceEndpoint_UpdateConfigSftp(envName, name string) string {
 	return fmt.Sprintf(`data "muleb2b_environment" "sbx" {
-  name = "Sandbox"
+  name = "%s"
 }
 
 data "muleb2b_identifier_type" "as2" {
@@ -334,7 +337,7 @@ resource "muleb2b_endpoint" "test" {
       password = "business"
     }
   }
-}`, name, name, name)
+}`, envName, name, name, name)
 }
 
 func testResourceEndpoint_UpdateCheckSftp() resource.TestCheckFunc {

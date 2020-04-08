@@ -6,34 +6,37 @@ import (
 	"github.com/hashicorp/terraform/helper/acctest"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
+	"os"
 	"testing"
 )
 
 func TestAccMuleB2bPartner(t *testing.T) {
 	name := "accTest-" + acctest.RandString(5)
+	number := acctest.RandIntRange(100, 10000)
+	envName := os.Getenv("TEST_ENV_NAME")
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testResourcePartner_InitialConfig(name),
+				Config: testResourcePartner_InitialConfig(envName, name, number),
 				Check:  testResourcePartner_InitialCheck(),
 			},
 			{
-				Config: testResourcePartner_UpdateConfig(name),
+				Config: testResourcePartner_UpdateConfig(envName, name, number),
 				Check:  testResourcePartner_UpdateCheck(),
 			},
 			{
-				Config: testResourcePartner_UpdateConfig2(name),
+				Config: testResourcePartner_UpdateConfig2(envName, name, number),
 				Check:  testResourcePartner_UpdateCheck2(),
 			},
 		},
 	})
 }
 
-func testResourcePartner_InitialConfig(name string) string {
+func testResourcePartner_InitialConfig(envName, name string, number int) string {
 	return fmt.Sprintf(`data "muleb2b_environment" "sbx" {
-  name = "Sandbox"
+  name = "%s"
 }
 
 data "muleb2b_identifier_type" "duns" {
@@ -46,11 +49,11 @@ resource "muleb2b_partner" "test" {
   environment_id = data.muleb2b_environment.sbx.id
   identifier {
     identifier_type_id = data.muleb2b_identifier_type.duns.id
-    value = "%s-id1"
+    value = "%d1"
   }
   identifier {
     identifier_type_id = data.muleb2b_identifier_type.duns.id
-    value = "remove-me-%s"
+    value = "%d2"
   }
   address {
     address_line_1 = "123 Main Street"
@@ -77,7 +80,7 @@ resource "muleb2b_partner" "test" {
     control_numbers {}
   }
 }
-`, name, name, name)
+`, envName, name, number, number)
 }
 
 func testResourcePartner_InitialCheck() resource.TestCheckFunc {
@@ -94,12 +97,14 @@ func testResourcePartner_InitialCheck() resource.TestCheckFunc {
 
 		id := instanceState.ID
 
+		envId := s.Modules[0].Resources["data.muleb2b_environment.sbx"].Primary.ID
+
 		if id == "" {
 			return fmt.Errorf("id is not set")
 		}
 
 		client := testAccProvider.Meta().(*muleb2b.Client)
-		client.SetEnvironment("3a4d3936-22d9-4d87-a3c0-a8d424bcc032")
+		client.SetEnvironment(envId)
 		partner, err := client.GetPartner(id)
 		if err != nil {
 			return err
@@ -140,9 +145,9 @@ func testResourcePartner_InitialCheck() resource.TestCheckFunc {
 	}
 }
 
-func testResourcePartner_UpdateConfig(name string) string {
+func testResourcePartner_UpdateConfig(envName, name string, number int) string {
 	return fmt.Sprintf(`data "muleb2b_environment" "sbx" {
-  name = "Sandbox"
+  name = "%s"
 }
 
 data "muleb2b_identifier_type" "duns" {
@@ -155,11 +160,11 @@ resource "muleb2b_partner" "test" {
   environment_id = data.muleb2b_environment.sbx.id
   identifier {
     identifier_type_id = data.muleb2b_identifier_type.duns.id
-    value = "%s-id1"
+    value = "%d1"
   }
   identifier {
     identifier_type_id = data.muleb2b_identifier_type.duns.id
-    value = "remove-me-%s"
+    value = "%d2"
   }
   address {
     address_line_1 = "123 Main Street"
@@ -196,7 +201,7 @@ resource "muleb2b_partner" "test" {
     control_numbers {}
   }
 }
-`, name, name, name)
+`, envName, name, number, number)
 }
 
 func testResourcePartner_UpdateCheck() resource.TestCheckFunc {
@@ -217,8 +222,10 @@ func testResourcePartner_UpdateCheck() resource.TestCheckFunc {
 			return fmt.Errorf("id is not set")
 		}
 
+		envId := s.Modules[0].Resources["data.muleb2b_environment.sbx"].Primary.ID
+
 		client := testAccProvider.Meta().(*muleb2b.Client)
-		client.SetEnvironment("3a4d3936-22d9-4d87-a3c0-a8d424bcc032")
+		client.SetEnvironment(envId)
 		partner, err := client.GetPartner(id)
 		if err != nil {
 			return err
@@ -264,9 +271,9 @@ func testResourcePartner_UpdateCheck() resource.TestCheckFunc {
 	}
 }
 
-func testResourcePartner_UpdateConfig2(name string) string {
+func testResourcePartner_UpdateConfig2(envName, name string, number int) string {
 	return fmt.Sprintf(`data "muleb2b_environment" "sbx" {
-  name = "Sandbox"
+  name = "%s"
 }
 
 data "muleb2b_identifier_type" "duns" {
@@ -279,11 +286,11 @@ resource "muleb2b_partner" "test" {
   environment_id = data.muleb2b_environment.sbx.id
   identifier {
     identifier_type_id = data.muleb2b_identifier_type.duns.id
-    value = "%s-id1"
+    value = "%d1"
   }
   identifier {
     identifier_type_id = data.muleb2b_identifier_type.duns.id
-    value = "remove-me-%s"
+    value = "%d2"
   }
   contact {
     name = "John Doe"
@@ -312,7 +319,7 @@ resource "muleb2b_partner" "test" {
     control_numbers {}
   }
 }
-`, name, name, name)
+`, envName, name, number, number)
 }
 
 func testResourcePartner_UpdateCheck2() resource.TestCheckFunc {
@@ -333,8 +340,10 @@ func testResourcePartner_UpdateCheck2() resource.TestCheckFunc {
 			return fmt.Errorf("id is not set")
 		}
 
+		envId := s.Modules[0].Resources["data.muleb2b_environment.sbx"].Primary.ID
+
 		client := testAccProvider.Meta().(*muleb2b.Client)
-		client.SetEnvironment("3a4d3936-22d9-4d87-a3c0-a8d424bcc032")
+		client.SetEnvironment(envId)
 		partner, err := client.GetPartner(id)
 		if err != nil {
 			return err

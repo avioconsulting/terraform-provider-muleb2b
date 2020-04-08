@@ -56,7 +56,7 @@ func dataSourcePartnerRead(d *schema.ResourceData, meta interface{}) error {
 			return err
 		}
 
-		if partner.Id == nil || *partner.Id == "" {
+		if partner == nil || partner.Id == nil || *partner.Id == "" {
 			return fmt.Errorf("no partner found with name (%s)", name)
 		}
 

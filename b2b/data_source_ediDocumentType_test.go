@@ -6,26 +6,28 @@ import (
 	"github.com/hashicorp/terraform/helper/acctest"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
+	"os"
 	"testing"
 )
 
 func TestAccMuleB2bEdiDocumentType(t *testing.T) {
 	name := "accTest-" + acctest.RandString(5)
+	envName := os.Getenv("TEST_ENV_NAME")
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testDataSourceEdiDocumentType_InitialConfig(name),
+				Config: testDataSourceEdiDocumentType_InitialConfig(name, envName),
 				Check:  testDataSourceEdiDocumentType_InitialCheck(),
 			},
 		},
 	})
 }
 
-func testDataSourceEdiDocumentType_InitialConfig(name string) string {
+func testDataSourceEdiDocumentType_InitialConfig(name, envName string) string {
 	return fmt.Sprintf(`data "muleb2b_environment" "sbx" {
-  name = "Sandbox"
+  name = "%s"
 }
 
 data "muleb2b_ediDocumentType" "test" {
@@ -54,7 +56,7 @@ resource "muleb2b_document" "test" {
   partner_id = muleb2b_partner.test.id
   environment_id = data.muleb2b_environment.sbx.id
   edi_document_type_id = data.muleb2b_ediDocumentType.test.id
-}`, name, name, name)
+}`, envName, name, name, name)
 }
 
 func testDataSourceEdiDocumentType_InitialCheck() resource.TestCheckFunc {

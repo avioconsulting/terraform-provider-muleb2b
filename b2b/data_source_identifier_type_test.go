@@ -4,31 +4,33 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
+	"os"
 	"testing"
 )
 
 func TestAccMuleB2bIdentifierType(t *testing.T) {
+	envName := os.Getenv("TEST_ENV_NAME")
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testDataSourceIdentifierType_InitialConfig(),
+				Config: testDataSourceIdentifierType_InitialConfig(envName),
 				Check:  testDataSourceIdentifierType_InitialCheck(),
 			},
 		},
 	})
 }
 
-func testDataSourceIdentifierType_InitialConfig() string {
+func testDataSourceIdentifierType_InitialConfig(envName string) string {
 	return fmt.Sprintf(`data "muleb2b_environment" "sbx" {
-  name = "Sandbox"
+  name = "%s"
 }
 
 data "muleb2b_identifier_type" "test" {
   environment_id = data.muleb2b_environment.sbx.id
   name = "AS2"
-}`)
+}`, envName)
 }
 
 func testDataSourceIdentifierType_InitialCheck() resource.TestCheckFunc {
@@ -44,28 +46,29 @@ func testDataSourceIdentifierType_InitialCheck() resource.TestCheckFunc {
 }
 
 func TestAccMuleB2bIdentifierTypeWithMultipleQualifiers(t *testing.T) {
+	envName := os.Getenv("TEST_ENV_NAME")
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testDataSourceIdentifierType_InitialConfigMultipleQualifiers(),
+				Config: testDataSourceIdentifierType_InitialConfigMultipleQualifiers(envName),
 				Check:  testDataSourceIdentifierType_InitialCheckMultipleQualifiers(),
 			},
 		},
 	})
 }
 
-func testDataSourceIdentifierType_InitialConfigMultipleQualifiers() string {
+func testDataSourceIdentifierType_InitialConfigMultipleQualifiers(envName string) string {
 	return fmt.Sprintf(`data "muleb2b_environment" "sbx" {
-  name = "Sandbox"
+  name = "%s"
 }
 
 data "muleb2b_identifier_type" "test" {
   environment_id = data.muleb2b_environment.sbx.id
   name = "X12-ISA"
   qualifier_code = "12"
-}`)
+}`, envName)
 }
 
 func testDataSourceIdentifierType_InitialCheckMultipleQualifiers() resource.TestCheckFunc {

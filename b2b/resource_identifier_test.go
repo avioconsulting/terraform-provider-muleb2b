@@ -6,30 +6,33 @@ import (
 	"github.com/hashicorp/terraform/helper/acctest"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
+	"os"
 	"testing"
 )
 
 func TestAccMuleB2bIdentifier(t *testing.T) {
 	name := "accTest-" + acctest.RandString(5)
+	number := acctest.RandIntRange(100, 10000)
+	envName := os.Getenv("TEST_ENV_NAME")
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testResourceIdnetifier_InitialConfig(name),
-				Check:  testResourceIdentifier_InitialCheck(name),
+				Config: testResourceIdnetifier_InitialConfig(envName, name, number),
+				Check:  testResourceIdentifier_InitialCheck(number),
 			},
 			{
-				Config: testResourceIdentifier_UpdateConfig(name),
-				Check:  testResourceIdentifier_UpdateCheck(name),
+				Config: testResourceIdentifier_UpdateConfig(envName, name, number),
+				Check:  testResourceIdentifier_UpdateCheck(number),
 			},
 		},
 	})
 }
 
-func testResourceIdnetifier_InitialConfig(name string) string {
+func testResourceIdnetifier_InitialConfig(envName, name string, number int) string {
 	return fmt.Sprintf(`data "muleb2b_environment" "sbx" {
-  name = "Sandbox"
+  name = "%s"
 }
 
 data "muleb2b_identifier_type" "duns" {
@@ -42,7 +45,7 @@ resource "muleb2b_partner" "test" {
   environment_id = data.muleb2b_environment.sbx.id
   identifier {
     identifier_type_id = data.muleb2b_identifier_type.duns.id
-    value = "%s-id1"
+    value = "%d1"
   }
 }
 
@@ -50,12 +53,12 @@ resource "muleb2b_identifier" "abc" {
   partner_id = muleb2b_partner.test.id
   environment_id = data.muleb2b_environment.sbx.id
   identifier_type_id = data.muleb2b_identifier_type.duns.id
-  value = "%s-id2"
+  value = "%d2"
 }
-`, name, name, name)
+`, envName, name, number, number)
 }
 
-func testResourceIdentifier_InitialCheck(name string) resource.TestCheckFunc {
+func testResourceIdentifier_InitialCheck(number int) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		resourceState := s.Modules[0].Resources["muleb2b_partner.test"]
 		if resourceState == nil {
@@ -82,21 +85,21 @@ func testResourceIdentifier_InitialCheck(name string) resource.TestCheckFunc {
 			return fmt.Errorf("partner identifier did not get created")
 		}
 
-		if !testResourceIdentifierFindExpected(identifiers, fmt.Sprintf("%s-id1", name)) {
-			return fmt.Errorf("identifier with value of %s-id1 not created", name)
+		if !testResourceIdentifierFindExpected(identifiers, fmt.Sprintf("%d1", number)) {
+			return fmt.Errorf("identifier with value of %d1 not created", number)
 		}
 
-		if !testResourceIdentifierFindExpected(identifiers, fmt.Sprintf("%s-id2", name)) {
-			return fmt.Errorf("identifier with value of %s-id2 not created", name)
+		if !testResourceIdentifierFindExpected(identifiers, fmt.Sprintf("%d2", number)) {
+			return fmt.Errorf("identifier with value of %d2 not created", number)
 		}
 
 		return nil
 	}
 }
 
-func testResourceIdentifier_UpdateConfig(name string) string {
+func testResourceIdentifier_UpdateConfig(envName, name string, number int) string {
 	return fmt.Sprintf(`data "muleb2b_environment" "sbx" {
-  name = "Sandbox"
+  name = "%s"
 }
 
 data "muleb2b_identifier_type" "duns" {
@@ -109,7 +112,7 @@ resource "muleb2b_partner" "test" {
   environment_id = data.muleb2b_environment.sbx.id
   identifier {
     identifier_type_id = data.muleb2b_identifier_type.duns.id
-    value = "%s-id1"
+    value = "%d1"
   }
 }
 
@@ -117,12 +120,12 @@ resource "muleb2b_identifier" "abc" {
   partner_id = muleb2b_partner.test.id
   environment_id = data.muleb2b_environment.sbx.id
   identifier_type_id = data.muleb2b_identifier_type.duns.id
-  value = "%s-id3"
+  value = "%d3"
 }
-`, name, name, name)
+`, envName, name, number, number)
 }
 
-func testResourceIdentifier_UpdateCheck(name string) resource.TestCheckFunc {
+func testResourceIdentifier_UpdateCheck(number int) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		resourceState := s.Modules[0].Resources["muleb2b_partner.test"]
 		if resourceState == nil {
@@ -149,12 +152,12 @@ func testResourceIdentifier_UpdateCheck(name string) resource.TestCheckFunc {
 			return fmt.Errorf("additional partner identifiers did not get created")
 		}
 
-		if !testResourceIdentifierFindExpected(identifiers, fmt.Sprintf("%s-id1", name)) {
-			return fmt.Errorf("identifier with value of %s-id1 not created", name)
+		if !testResourceIdentifierFindExpected(identifiers, fmt.Sprintf("%d1", number)) {
+			return fmt.Errorf("identifier with value of %d1 not created", number)
 		}
 
-		if !testResourceIdentifierFindExpected(identifiers, fmt.Sprintf("%s-id3", name)) {
-			return fmt.Errorf("identifier with value of %s-id3 not created", name)
+		if !testResourceIdentifierFindExpected(identifiers, fmt.Sprintf("%d3", number)) {
+			return fmt.Errorf("identifier with value of %d3 not created", number)
 		}
 
 		return nil

@@ -1,9 +1,10 @@
 TEST?=./...
 VERSION?="v0.0.0"
+ENV?="DEV"
 
 # Acceptance Testing
 testacc:
-	TF_ACC=1 go test -v $(TEST) $(TESTARGS)
+	TEST_ENV_NAME=$(ENV) TF_ACC=1 go test -v $(TEST) $(TESTARGS)
 
 # Build the provider
 build: clean
